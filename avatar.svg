@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Illustration of Rishi Makwana">
+  <!-- Default state: hair + shirt melt into the dark background, only light areas pop -->
+
+  <!-- Shirt (polo) -->
+  <path d="M62 362 C 66 318 96 292 160 280 L 240 280 C 304 292 334 318 338 362 L 300 366 L 300 400 L 100 400 L 100 366 Z" fill="#12110f"/>
+  <!-- White shoulder panels -->
+  <path d="M84 322 C 100 300 126 288 158 282 L 162 297 C 134 303 112 314 96 334 Z" fill="#cbbdb5"/>
+  <path d="M316 322 C 300 300 274 288 242 282 L 238 297 C 266 303 288 314 304 334 Z" fill="#cbbdb5"/>
+  <!-- Arms -->
+  <path d="M64 364 L 100 368 L 98 400 L 60 400 Z" fill="#cbbdb5"/>
+  <path d="M336 364 L 300 368 L 302 400 L 340 400 Z" fill="#cbbdb5"/>
+
+  <!-- Neck -->
+  <path d="M172 240 L 172 282 Q 200 304 228 282 L 228 240 Z" fill="#cbbdb5"/>
+  <!-- Collar -->
+  <path d="M164 280 L 200 302 L 182 322 Z" fill="#12110f"/>
+  <path d="M236 280 L 200 302 L 218 322 Z" fill="#12110f"/>
+
+  <!-- Ears -->
+  <ellipse cx="129" cy="172" rx="12" ry="19" fill="#cbbdb5"/>
+  <ellipse cx="271" cy="172" rx="12" ry="19" fill="#cbbdb5"/>
+  <!-- Face -->
+  <path d="M130 150 C 130 98 160 80 200 80 C 240 80 270 98 270 150 L 270 186 C 270 232 240 262 200 262 C 160 262 130 232 130 186 Z" fill="#cbbdb5"/>
+
+  <!-- Hair: thick, swept up -->
+  <path d="M126 178 C 112 120 128 70 176 58 C 198 40 250 44 268 72 C 292 94 292 142 276 178 C 272 148 264 128 250 118 C 228 126 196 122 176 112 C 156 122 138 142 134 178 Z" fill="#12110f"/>
+  <path d="M148 86 C 164 48 224 40 256 68 C 232 62 206 66 186 82 Z" fill="#12110f"/>
+
+  <!-- Eyebrows -->
+  <path d="M146 140 Q 168 131 190 138" fill="none" stroke="#12110f" stroke-width="7" stroke-linecap="round"/>
+  <path d="M210 138 Q 232 131 254 140" fill="none" stroke="#12110f" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Sunglasses -->
+  <path d="M130 158 L 142 156" stroke="#12110f" stroke-width="5" stroke-linecap="round"/>
+  <path d="M270 158 L 258 156" stroke="#12110f" stroke-width="5" stroke-linecap="round"/>
+  <rect x="140" y="147" width="55" height="38" rx="12" fill="#12110f"/>
+  <rect x="205" y="147" width="55" height="38" rx="12" fill="#12110f"/>
+  <path d="M193 158 Q 200 152 207 158" fill="none" stroke="#12110f" stroke-width="5"/>
+  <path d="M150 156 L 164 156" stroke="#cbbdb5" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+  <path d="M215 156 L 229 156" stroke="#cbbdb5" stroke-opacity=".35" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Nose -->
+  <path d="M202 176 Q 197 198 190 205 Q 200 211 210 205" fill="none" stroke="#8f827b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Beard -->
+  <path d="M131 178 C 132 236 162 270 200 272 C 238 270 268 236 269 178 C 262 206 248 224 232 230 C 222 218 178 218 168 230 C 152 224 138 206 131 178 Z" fill="#12110f"/>
+  <!-- Smile -->
+  <path d="M180 239 Q 200 255 220 239 Q 200 247 180 239 Z" fill="#cbbdb5"/>
+  <!-- Moustache -->
+  <path d="M166 229 C 178 217 192 219 200 224 C 208 219 222 217 234 229 C 222 227 208 229 200 234 C 192 229 178 227 166 229 Z" fill="#12110f"/>
+</svg>
