@@ -148,6 +148,9 @@
     background:
       radial-gradient(60% 55% at 85% 20%, rgba(255, 138, 61, 0.10), transparent 70%),
       radial-gradient(40% 40% at 5% 90%, rgba(255, 255, 255, 0.03), transparent 70%);
+    /* --p = how far the hero has been scrolled away (0 → 1), set by the script */
+    transform: translateY(calc(var(--p, 0) * 140px)) scale(calc(1 + var(--p, 0) * 0.35));
+    opacity: calc(1 - var(--p, 0) * 0.6);
   }
   .hero::after {
     content: ""; position: absolute; inset: 0; pointer-events: none; opacity: .5;
@@ -155,6 +158,10 @@
     background-size: 64px 64px;
     mask-image: radial-gradient(70% 60% at 50% 40%, #000 0%, transparent 75%);
     -webkit-mask-image: radial-gradient(70% 60% at 50% 40%, #000 0%, transparent 75%);
+    /* The grid tips backwards like a floor as you scroll away */
+    transform-origin: 50% 100%;
+    transform: perspective(700px) rotateX(calc(var(--p, 0) * 55deg)) scale(calc(1 + var(--p, 0) * 0.4));
+    opacity: calc(0.5 - var(--p, 0) * 0.5);
   }
   .hero .wrap { position: relative; z-index: 1; width: 100%; }
   .greet { margin-top: 0; font-size: clamp(20px, 2.4vw, 26px); color: var(--muted); min-height: 1.5em; }
@@ -166,6 +173,11 @@
   .hero-text { container-type: inline-size; min-width: 0; }
   .hero-name { font-size: clamp(56px, min(11vw, 24vh), 200px); font-size: clamp(52px, min(22cqw, 24vh), 200px); margin: 6px 0 0; }
   .hero-name .l2 { color: transparent; -webkit-text-stroke: 1.5px var(--text); }
+  .hero-name .l1, .hero-name .l2 { display: inline-block; }
+
+  /* Scroll-away exit: these elements are moved by the script as the hero scrolls out */
+  .hero-text, .hero-name .l1, .hero-name .l2, .avatar, .avatar-cap { will-change: transform, opacity; transform-origin: 0% 50%; }
+  .avatar { transform-origin: 50% 40%; }
 
   /* Avatar: two drawings stacked; hover/tap cross-fades to the second one */
   .avatar { margin: 0; justify-self: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -333,19 +345,27 @@
   .job-path { margin-top: 40px; max-width: 360px; }
   .job-path-label { font-family: var(--mono); font-size: 11.5px; letter-spacing: .18em; text-transform: uppercase; color: var(--faint); margin-bottom: 20px; }
   .job-path ol { list-style: none; position: relative; }
-  .job-path ol::before {
+  /* Grey track + orange fill that grows with scroll (--fill is set by the script, 0 → 1) */
+  .job-path ol::before, .job-path ol::after {
     content: ""; position: absolute; left: 6px; top: 8px; bottom: 8px; width: 1px;
-    background: linear-gradient(var(--line-2), var(--accent));
-    transform-origin: top; transition: transform 1.2s ease .2s;
   }
-  .js .job.reveal:not(.in) .job-path ol::before { transform: scaleY(0); }
+  .job-path ol::before { background: var(--line-2); }
+  .job-path ol::after {
+    width: 2px; left: 5.5px; background: var(--accent); border-radius: 2px;
+    transform-origin: top; transform: scaleY(var(--fill, 1));
+    box-shadow: 0 0 10px rgba(255, 138, 61, 0.5);
+  }
   .job-path li { position: relative; padding: 0 0 22px 32px; }
   .job-path li:last-child { padding-bottom: 0; }
   .job-path li::before {
     content: ""; position: absolute; left: 0; top: 5px; width: 13px; height: 13px; border-radius: 50%;
     background: var(--bg); border: 1px solid var(--line-2); box-sizing: border-box;
   }
-  .job-path li:last-child::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 5px rgba(255, 138, 61, 0.15); }
+  .job-path li::before { z-index: 1; transition: background .3s, border-color .3s, box-shadow .3s; }
+  .job-path li b, .job-path li small { transition: color .3s; }
+  /* A step "lights up" once the fill line reaches it (without JS, all steps are lit) */
+  html:not(.fx) .job-path li::before, .job-path li.lit::before { background: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 5px rgba(255, 138, 61, 0.15); }
+  .fx .job-path li:not(.lit) b { color: var(--muted); }
   .job-path b { display: block; font-size: 15px; font-weight: 500; line-height: 1.4; }
   .job-path small { display: block; font-size: 13px; color: var(--faint); line-height: 1.5; margin-top: 2px; }
   @media (max-width: 960px) { .job-path { margin-top: 28px; } }
@@ -391,6 +411,26 @@
   .contact-title { font-size: clamp(46px, 11vw, 150px); }
   .contact-title a { color: transparent; -webkit-text-stroke: 1.5px var(--text); transition: color .3s, -webkit-text-stroke-color .3s; }
   .contact-title a:hover { color: var(--accent); -webkit-text-stroke-color: var(--accent); }
+
+  /* ---------- Scroll effects (only when html.fx is set, i.e. JS on and motion allowed) ---------- */
+  main { overflow-x: clip; } /* sliding titles never cause sideways scrolling */
+
+  /* 1. Word-by-word reveal: words start dim and light up as you scroll past */
+  .fx .w { opacity: .16; transition: opacity .35s ease; }
+  .fx .w.on { opacity: 1; }
+
+  /* 2. Section titles: solid word glides in from the left, outlined word from the right */
+  .section-title .solid, .section-title .ghost { display: inline-block; will-change: transform; }
+
+  /* 3. Tech strip is driven by the script (speed + direction follow your scrolling) */
+  .fx .marquee-track { animation: none; will-change: transform; }
+
+  /* 5. Contact title: lines slide in from opposite sides, "something." fills with orange */
+  .contact-title .cl1, .contact-title a { display: inline-block; will-change: transform; }
+  .fx .contact-title a {
+    background: linear-gradient(var(--accent), var(--accent)) no-repeat 0 0 / calc(var(--cfill, 0) * 100%) 100%;
+    -webkit-background-clip: text; background-clip: text;
+  }
   .contact-sub { color: var(--muted); font-size: 18px; max-width: 560px; margin-top: 28px; }
   .contact-links { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: 56px; background: var(--line); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
   .contact-links a { background: var(--bg); padding: 24px; display: flex; justify-content: space-between; align-items: center; gap: 12px; transition: background .25s; min-width: 0; }
@@ -470,7 +510,7 @@
       <div class="hero-top">
         <div class="hero-text">
           <p class="greet intro-in d1"><span id="typed">Hello</span><span class="cursor" aria-hidden="true"></span>, I'm</p>
-          <h1 class="h-display hero-name intro-in d2">Rishi<br><span class="l2">Makwana</span></h1>
+          <h1 class="h-display hero-name intro-in d2"><span class="l1">Rishi</span><br><span class="l2">Makwana</span></h1>
         </div>
         <figure class="avatar intro-in d3">
           <div class="avatar-stage" id="avatar" tabindex="0" role="img" aria-label="Illustration of Rishi Makwana">
@@ -533,7 +573,7 @@
     <div class="wrap">
       <p class="eyebrow">About Rishi</p>
       <div class="about-grid">
-        <p class="about-big reveal">Full-stack roots, <em>AI-first</em> focus. I like turning a promising model into something people can actually use every day.</p>
+        <p class="about-big" data-words>Full-stack roots, <em>AI-first</em> focus. I like turning a promising model into something people can actually use every day.</p>
         <div class="about-copy reveal">
           <p>I started as a <strong>full-stack developer</strong>, building a multi-app Learning Management System in React and Node.js. Along the way I built its <strong>AI course generator</strong>, a RAG system that turns a prompt or an uploaded PDF into a structured course, and it became the default way instructors create content.</p>
           <p>Now I focus on <strong>LLM applications</strong>: LangChain/LangGraph agent workflows, retrieval pipelines on vector databases, and FastAPI backends with clean React front ends on top.</p>
@@ -541,10 +581,10 @@
         </div>
       </div>
       <div class="stats reveal">
-        <div class="stat"><b>1.5 yrs</b><span>building production software at Excelsior Technologies</span></div>
+        <div class="stat"><b data-count="1.5" data-suffix=" yrs">1.5 yrs</b><span>building production software at Excelsior Technologies</span></div>
         <div class="stat"><b>Days → Hrs</b><span>course creation time after the AI generator launched</span></div>
         <div class="stat"><b>~⅓</b><span>faster feature builds from a shared monorepo UI library</span></div>
-        <div class="stat"><b>3</b><span>LLM-powered products built end to end</span></div>
+        <div class="stat"><b data-count="3">3</b><span>LLM-powered products built end to end</span></div>
       </div>
     </div>
   </section>
@@ -552,7 +592,7 @@
   <!-- QUOTE -->
   <section class="quote" aria-label="Highlight">
     <div class="wrap">
-      <blockquote class="h-display reveal">“Course creation went from <span class="hl">a couple of days</span> to a few hours.”</blockquote>
+      <blockquote class="h-display" data-words>“Course creation went from <span class="hl">a couple of days</span> to a few hours.”</blockquote>
       <cite>Impact of the AI course generator<br>Excelsior Technologies · LMS platform</cite>
     </div>
   </section>
@@ -561,7 +601,7 @@
   <section id="projects">
     <div class="wrap">
       <p class="eyebrow">Selected work</p>
-      <h2 class="h-display section-title">Featured <span class="ghost">Projects</span></h2>
+      <h2 class="h-display section-title"><span class="solid">Featured</span> <span class="ghost">Projects</span></h2>
 
       <div class="carousel reveal">
       <div class="carousel-bar">
@@ -690,7 +730,7 @@
   <section class="experience" id="experience">
     <div class="wrap">
       <p class="eyebrow">Career</p>
-      <h2 class="h-display section-title">Work <span class="ghost">Experience</span></h2>
+      <h2 class="h-display section-title"><span class="solid">Work</span> <span class="ghost">Experience</span></h2>
 
       <div class="job reveal">
         <div>
@@ -728,7 +768,7 @@
   <section id="skills">
     <div class="wrap">
       <p class="eyebrow">Expertise</p>
-      <h2 class="h-display section-title">Tech <span class="ghost">Stack</span></h2>
+      <h2 class="h-display section-title"><span class="solid">Tech</span> <span class="ghost">Stack</span></h2>
 
       <div class="skills-grid reveal">
         <div class="skill-card">
@@ -769,7 +809,7 @@
   <section id="education" style="padding-top: 0;">
     <div class="wrap">
       <p class="eyebrow">Background</p>
-      <h2 class="h-display section-title">Education <span class="ghost">&amp; Certs</span></h2>
+      <h2 class="h-display section-title"><span class="solid">Education</span> <span class="ghost">&amp; Certs</span></h2>
       <div class="edu-grid">
         <div class="card reveal">
           <p class="eyebrow">Degree</p>
@@ -797,7 +837,7 @@
   <section class="contact" id="contact">
     <div class="wrap">
       <p class="eyebrow">Get in touch</p>
-      <h2 class="h-display contact-title">Let's build<br><a href="mailto:rishimakwana05@gmail.com">something.</a></h2>
+      <h2 class="h-display contact-title"><span class="cl1">Let's build</span><br><a href="mailto:rishimakwana05@gmail.com">something.</a></h2>
       <p class="contact-sub">I'm looking for AI Engineer roles where I can ship production LLM systems. If you're hiring or building something interesting, I'd love to hear from you.</p>
 
       <div class="contact-links">
@@ -855,6 +895,197 @@
       } catch (e) { el.textContent = "IST"; }
     }
     update(); setInterval(update, 30000);
+  })();
+
+  // Hero scroll-away: as the first screen scrolls out, the name splits apart, zooms
+  // toward you and blurs out, while the avatar shrinks, tilts and drops down.
+  (function () {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    var hero = document.querySelector(".hero");
+    var text = document.querySelector(".hero-text");
+    var greet = document.querySelector(".greet");
+    var l1 = document.querySelector(".hero-name .l1");
+    var l2 = document.querySelector(".hero-name .l2");
+    var avatar = document.querySelector(".avatar");
+    var cap = document.querySelector(".avatar-cap");
+
+    // The load-in animation holds opacity/transform on these elements; release it once
+    // it has played so the scroll effect can take over.
+    var intro = document.querySelectorAll(".intro-in");
+    function releaseIntro() { intro.forEach(function (el) { el.classList.remove("intro-in"); }); }
+    intro.forEach(function (el) {
+      el.addEventListener("animationend", function () { el.classList.remove("intro-in"); last = -1; update(); }, { once: true });
+    });
+    setTimeout(function () { releaseIntro(); last = -1; update(); }, 1600); // fallback if animationend never fires
+
+    function clamp(v) { return Math.max(0, Math.min(1, v)); }
+    function ease(t) { return t * t * (3 - 2 * t); } // smooth start and end
+    // Progress of one part of the animation between two points of the overall scroll progress
+    function seg(p, from, to) { return ease(clamp((p - from) / (to - from))); }
+
+    var last = -1;
+    function update() {
+      var h = hero.offsetHeight || window.innerHeight;
+      var p = clamp(window.scrollY / (h * 0.9));
+      if (p === last) return;
+      last = p;
+      if (p > 0) releaseIntro(); // visitor started scrolling before the load-in finished
+      hero.style.setProperty("--p", p.toFixed(4));
+
+      var vw = window.innerWidth / 100;
+      var g = seg(p, 0, 0.4);        // greeting goes first
+      var n = seg(p, 0, 0.85);       // then the name
+      var a = seg(p, 0.08, 1);       // avatar a beat behind
+
+      greet.style.opacity = 1 - g;
+      greet.style.transform = "translateY(" + (-g * 30) + "px)";
+
+      // Name: zooms toward the viewer, lifts slightly, blurs and fades
+      text.style.transform = "translateY(" + (-n * 60) + "px) scale(" + (1 + n * 0.22) + ")";
+      text.style.opacity = 1 - n;
+      text.style.filter = n > 0.01 ? "blur(" + (n * 10).toFixed(2) + "px)" : "";
+      // ...and the two lines slide apart
+      l1.style.transform = "translateX(" + (-n * 14 * vw) + "px)";
+      l2.style.transform = "translateX(" + (n * 10 * vw) + "px)";
+
+      // Avatar: shrinks, tilts and drops down out of the screen
+      avatar.style.transform = "translateY(" + (a * 38) + "vh) rotate(" + (-a * 14) + "deg) scale(" + (1 - a * 0.45) + ")";
+      avatar.style.opacity = 1 - a;
+      cap.style.opacity = 1 - seg(p, 0, 0.3);
+    }
+
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", function () { last = -1; update(); });
+    update();
+  })();
+
+  // Scroll effects, adapted from award-winning portfolio sites:
+  //  1. word-by-word text reveal   2. section titles sliding in from both sides
+  //  3. tech strip reacting to scroll speed/direction   4. experience timeline filling on scroll
+  //  5. contact title slide + fill   6. stats counting up
+  (function () {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    document.documentElement.classList.add("fx");
+
+    var vh = window.innerHeight;
+    function clamp(v) { return Math.max(0, Math.min(1, v)); }
+    function ease(t) { return t * t * (3 - 2 * t); }
+    // 0 while the element's top is below `from` (fraction of screen height), 1 once it reaches `to`
+    function prog(el, from, to) {
+      var top = el.getBoundingClientRect().top;
+      return clamp((vh * from - top) / (vh * (from - to)));
+    }
+
+    // 1. Wrap every word in a span, keeping inner tags like <em> and the orange highlight
+    function splitWords(node) {
+      Array.prototype.slice.call(node.childNodes).forEach(function (ch) {
+        if (ch.nodeType === 3) {
+          var frag = document.createDocumentFragment();
+          ch.textContent.split(/(\s+)/).forEach(function (s) {
+            if (!s) return;
+            if (/^\s+$/.test(s)) { frag.appendChild(document.createTextNode(s)); return; }
+            var w = document.createElement("span"); w.className = "w"; w.textContent = s; frag.appendChild(w);
+          });
+          node.replaceChild(frag, ch);
+        } else if (ch.nodeType === 1) {
+          splitWords(ch);
+        }
+      });
+    }
+    var wordBlocks = Array.prototype.map.call(document.querySelectorAll("[data-words]"), function (el) {
+      splitWords(el);
+      return { el: el, words: el.querySelectorAll(".w") };
+    });
+
+    var titles = Array.prototype.map.call(document.querySelectorAll(".section-title"), function (t) {
+      return { el: t, a: t.querySelector(".solid"), b: t.querySelector(".ghost") };
+    });
+    var paths = Array.prototype.map.call(document.querySelectorAll(".job-path ol"), function (ol) {
+      return { ol: ol, items: ol.querySelectorAll("li") };
+    });
+    var ct = document.querySelector(".contact-title");
+    var ct1 = ct && ct.querySelector(".cl1"), ct2 = ct && ct.querySelector("a");
+
+    function update() {
+      vh = window.innerHeight;
+
+      // 1. Light up words in reading order as the block moves up the screen
+      wordBlocks.forEach(function (b) {
+        var lit = Math.round(prog(b.el, 0.85, 0.35) * b.words.length);
+        for (var i = 0; i < b.words.length; i++) b.words[i].classList.toggle("on", i < lit);
+      });
+
+      // 2. Titles: the two words start apart and meet in place
+      titles.forEach(function (t) {
+        if (!t.a || !t.b) return;
+        var p = ease(prog(t.el, 1, 0.45)), k = 1 - p;
+        t.a.style.transform = "translateX(" + (-k * 12).toFixed(2) + "vw)";
+        t.b.style.transform = "translateX(" + (k * 18).toFixed(2) + "vw)";
+        t.a.style.opacity = t.b.style.opacity = (0.2 + 0.8 * p).toFixed(3);
+      });
+
+      // 4. Timeline: the orange line follows a point 65% down the screen; dots light as it passes
+      paths.forEach(function (o) {
+        var r = o.ol.getBoundingClientRect(), reach = vh * 0.65 - r.top;
+        o.ol.style.setProperty("--fill", clamp((reach - 8) / (r.height - 16)).toFixed(3));
+        o.items.forEach(function (li) { li.classList.toggle("lit", reach >= li.offsetTop + 11); });
+      });
+
+      // 5. Contact: lines slide in from opposite sides, then "something." fills with orange
+      if (ct) {
+        var p = ease(prog(ct, 1, 0.4)), k = 1 - p;
+        ct1.style.transform = "translateX(" + (-k * 20).toFixed(2) + "vw)";
+        ct2.style.transform = "translateX(" + (k * 20).toFixed(2) + "vw)";
+        ct.style.setProperty("--cfill", prog(ct, 0.75, 0.35).toFixed(3));
+      }
+    }
+
+    // 3. Tech strip: always drifting; scrolling speeds it up, scrolling up reverses it
+    var track = document.querySelector(".marquee-track");
+    var x = 0, dir = -1, boost = 0, lastY = window.scrollY;
+    function loop() {
+      var r = track && track.getBoundingClientRect();
+      if (r && r.bottom > 0 && r.top < window.innerHeight) { // only animate while on screen
+        var gap = parseFloat(getComputedStyle(track).columnGap) || 0;
+        var period = (track.scrollWidth + gap) / 2; // the list is duplicated, so this loops seamlessly
+        x += dir * (0.6 + Math.min(boost, 60) * 0.3);
+        if (x <= -period) x += period;
+        if (x > 0) x -= period;
+        track.style.transform = "translateX(" + x.toFixed(2) + "px)";
+      }
+      boost *= 0.92;
+      requestAnimationFrame(loop);
+    }
+
+    window.addEventListener("scroll", function () {
+      var y = window.scrollY, d = y - lastY;
+      if (d) { dir = d > 0 ? -1 : 1; boost = Math.abs(d); }
+      lastY = y;
+      update();
+    }, { passive: true });
+    window.addEventListener("resize", update);
+    update();
+    requestAnimationFrame(loop);
+
+    // 6. Stats count up the first time they come into view
+    if ("IntersectionObserver" in window) {
+      var cio = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (!e.isIntersecting) return;
+          cio.unobserve(e.target);
+          var el = e.target, to = parseFloat(el.dataset.count), suf = el.dataset.suffix || "";
+          var dec = (el.dataset.count.split(".")[1] || "").length, t0 = performance.now();
+          function step(now) {
+            var t = Math.min(1, (now - t0) / 1400);
+            el.textContent = (to * (1 - Math.pow(1 - t, 3))).toFixed(dec) + suf;
+            if (t < 1) requestAnimationFrame(step);
+          }
+          requestAnimationFrame(step);
+          setTimeout(function () { el.textContent = to.toFixed(dec) + suf; }, 1600); // always end on the real value
+        });
+      }, { threshold: 0.6 });
+      document.querySelectorAll("[data-count]").forEach(function (el) { cio.observe(el); });
+    }
   })();
 
   // Avatar: tap to toggle on touch screens (hover handles mouse)
